@@ -30,4 +30,4 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
-//Route::get('/where/{parametar}/{value}', 'NotesController@where');
+

@@ -34,8 +34,9 @@ class UsersController extends Controller
 
     public function showUserNotes($id)
     {
-//                $notes['my notes'] = Note::where('owner_id', $id)->get();
-        $notes['public notes'] = Notes::collection(Note::where('owner_id', '=', $id)->where('status', '=', 'public')->with('tag')->get());
+        $notes['public notes'] = Notes::collection(
+            Note::where('owner_id', '=', $id)->where('status', '=', 'public')->with('tag')->get()
+        );
 
         return response()->json($notes);
     }
