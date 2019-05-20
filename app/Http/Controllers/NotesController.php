@@ -41,7 +41,6 @@ class NotesController extends Controller
                          ->with('tag')
                          ->paginate(5)
                          ->withPath(url()->full());
-            dd($note);
 
             return Notes::collection($note);
         }
