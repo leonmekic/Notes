@@ -19,25 +19,31 @@ class UsersController extends Controller
 
     public function showUsers()
     {
-        return Users::collection(User::all());
+        $users = User::all();
+
+        return Users::collection($users);
     }
 
     public function showCurrentUser()
     {
-        return Users::collection(User::query()->where('id', Auth::user()->id)->get());
+        $user = User::query()->where('id', Auth::user()->id)->get();
+
+        return Users::collection($user);
     }
 
     public function showUserById($id)
     {
-        return Users::collection(User::query()->where('id', $id)->get());
+        $user = User::query()->where('id', $id)->get();
+
+        return Users::collection($user);
     }
 
     public function showUserNotes($id)
     {
-        $notes['public notes'] = Notes::collection(
-            Note::where('owner_id', '=', $id)->where('status', '=', 'public')->with('tag')->get()
+        $notes = Note::where('owner_id', '=', $id)->where('status', '=', 'public')->with('tag')->paginate(5)->withPath(
+            url()->full()
         );
 
-        return response()->json($notes);
+        return Notes::collection($notes);
     }
 }

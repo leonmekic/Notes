@@ -30,7 +30,7 @@ class TagsController extends Controller
                           $id
                       );
             }
-        )->get();
+        )->with('tag')->get();
 
         return Notes::collection($notes);
     }
@@ -38,15 +38,16 @@ class TagsController extends Controller
     public function showTags(Request $request)
     {
         $term = $request->get('term');
+        $tag = Tag::query();
         if ($term) {
-            return Tags::collection(
-                Tag::query()->where('tag', 'like', '%' . $term . '%')->orderBy('tag')->paginate(5)->withPath(
-                    url()->full()
-                )
+            $tag = $tag->where('tag', 'like', $term . '%')->orderBy('tag')->paginate(10)->withPath(
+                url()->full()
+
             );
         } else {
-            return Tags::collection(Tag::paginate(5)->withPath(url()->full()));
+            $tag = $tag->paginate(10)->withPath(url()->full());
         }
 
+        return Tags::collection($tag);
     }
 }

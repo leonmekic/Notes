@@ -7,6 +7,7 @@ use App\Http\Resources\Notes;
 use App\Note;
 use App\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,28 +23,49 @@ class NotesController extends Controller
     {
         $note = Note::query();
         $term = $request->get('term');
-        if ($term) {
-            $note = $note->where('owner_id', auth()->id())->where('note', 'like', $term . '%')->orWhere(
-                'status',
-                '=',
-                'public'
-            )->where(
-                'note',
-                'like',
-                $term . '%'
-            )->with('tag')->paginate(5)->withPath(url()->full());
 
-            return Notes::collection($note);
+        if ($term) {
+            $note = $note->where('note', 'like', $term . '%')->where(
+                function ($query) {
+                    $query->where('status', '=', 'public')->orWhere('owner_id', auth()->id());
+                }
+            )->with('tag')->orderBy(
+                'created_at',
+                'ASC'
+            )->paginate(5)->withPath(url()->full());
+
+            $items = $note->items();
 
         } else {
-            $note = $note->where('status', '=', 'public')
-                         ->orWhere('owner_id', auth()->id())
-                         ->with('tag')
-                         ->paginate(5)
-                         ->withPath(url()->full());
+            $note = $note->where('owner_id', auth()->id())->orWhere('status', '=', 'public')->paginate(5)->withPath(
+                url()->full()
+            );
 
-            return Notes::collection($note);
+            $items = $note->items();
+
         }
+        $userId = auth()->id();
+
+        usort(
+            $items,
+            function ($model) use ($userId) {
+                if ($model->owner_id === $userId) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+        );
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $itemCollection = collect($items);
+        $perPage = 10;
+        $currentPageItems = $itemCollection->slice(($currentPage * $perPage) - $perPage, $perPage)->all();
+        $paginatedItems = new LengthAwarePaginator($currentPageItems, count($itemCollection), $perPage);
+        $paginatedItems->withPath(url()->full());
+
+        $collection = Notes::collection($paginatedItems);
+
+        return $collection;
 
     }
 
@@ -89,7 +111,7 @@ class NotesController extends Controller
     public function edit(Note $note)
     {
         if ($note->owner_id !== auth()->id()) {
-            return response()->json('You cannot edit a private note');
+            return response()->json('You can only edit your notes');
         };
         $note = Note::find($note->id);
         $tags = Tag::query()->pluck('tag');
@@ -130,12 +152,14 @@ class NotesController extends Controller
 
     public function show(Note $note)
     {
-        if ($note->owner_id !== auth()->id()) {
-            return response()->json('You cannot view a private note');
-        };
         $notes = Note::query();
-        $allNotes = Notes::collection($notes->where('id', $note->id)->paginate(5)->withPath(url()->full()));
 
-        return response()->json($allNotes);
+        if ($note->owner_id == auth()->id() || $note->status == 'Public') {
+            $allNotes = Notes::collection($notes->where('id', $note->id)->paginate(5)->withPath(url()->full()));
+
+            return $allNotes;
+        } else {
+            return response()->json('You cannot view a private note');
+        }
     }
 }
