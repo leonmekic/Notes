@@ -34,20 +34,21 @@ class NotesController extends Controller
                 'ASC'
             )->paginate(5)->withPath(url()->full());
 
-            $items = $note->items();
+            $notes = $note->items();
 
         } else {
-            $note = $note->where('owner_id', auth()->id())->orWhere('status', '=', 'public')->paginate(5)->withPath(
-                url()->full()
+            $note = $note->where('owner_id', auth()->id())
+                         ->orWhere('status', '=', 'public')
+                         ->paginate(5)->withPath(url()->full()
             );
 
-            $items = $note->items();
+            $notes = $note->items();
 
         }
         $userId = auth()->id();
 
         usort(
-            $items,
+            $notes,
             function ($model) use ($userId) {
                 if ($model->owner_id === $userId) {
                     return -1;
@@ -56,11 +57,10 @@ class NotesController extends Controller
                 }
             }
         );
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $itemCollection = collect($items);
+
+        $notesCollection = collect($notes);
         $perPage = 10;
-        $currentPageItems = $itemCollection->slice(($currentPage * $perPage) - $perPage, $perPage)->all();
-        $paginatedItems = new LengthAwarePaginator($currentPageItems, count($itemCollection), $perPage);
+        $paginatedItems = new LengthAwarePaginator($notesCollection, count($notesCollection), $perPage);
         $paginatedItems->withPath(url()->full());
 
         $collection = Notes::collection($paginatedItems);
