@@ -36,10 +36,7 @@ class NotesController extends Controller
 
         }
 
-        $notes = $note->orderBy(
-            'created_at',
-            'ASC'
-        )->with('tag')->get();
+        $notes = $note->oldest()->with('tag')->get();
 
         $userId = auth()->id();
         $sortedNotes = $notes->sortBy(
