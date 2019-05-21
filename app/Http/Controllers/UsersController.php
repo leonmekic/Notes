@@ -26,14 +26,14 @@ class UsersController extends Controller
 
     public function showCurrentUser()
     {
-        $user = User::query()->where('id', Auth::user()->id)->get();
+        $user = User::where('id', Auth::user()->id)->get();
 
         return Users::collection($user);
     }
 
     public function showUserById($id)
     {
-        $user = User::query()->where('id', $id)->get();
+        $user = User::where('id', $id)->get();
 
         return Users::collection($user);
     }
@@ -47,3 +47,4 @@ class UsersController extends Controller
         return Notes::collection($notes);
     }
 }
+

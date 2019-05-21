@@ -18,8 +18,7 @@ class TagsController extends Controller
 
     public function notesByTag($id)
     {
-        $note = Note::query();
-        $notes = $note->whereHas(
+        $notes = Note::whereHas(
             'tag',
             function ($query) use ($id) {
                 $query->where('owner_id', '=', auth()->id())
@@ -38,14 +37,14 @@ class TagsController extends Controller
     public function showTags(Request $request)
     {
         $term = $request->get('term');
-        $tag = Tag::query();
+
         if ($term) {
-            $tag = $tag->where('tag', 'like', $term . '%')->orderBy('tag')->paginate(10)->withPath(
+            $tag = Tag::where('tag', 'like', $term . '%')->orderBy('tag')->paginate(10)->withPath(
                 url()->full()
 
             );
         } else {
-            $tag = $tag->paginate(10)->withPath(url()->full());
+            $tag = Tag::paginate(10)->withPath(url()->full());
         }
 
         return Tags::collection($tag);

@@ -25,30 +25,24 @@ class NotesController extends Controller
         $term = $request->get('term');
 
         if ($term) {
-            $note = $note->where('note', 'like', $term . '%')->where(
+            $note->where('note', 'like', $term . '%')->where(
                 function ($query) {
                     $query->where('status', '=', 'public')->orWhere('owner_id', auth()->id());
                 }
-            )->with('tag')->orderBy(
-                'created_at',
-                'ASC'
-            )->paginate(5)->withPath(url()->full());
-
-            $notes = $note->items();
-
-        } else {
-            $note = $note->where('owner_id', auth()->id())
-                         ->orWhere('status', '=', 'public')
-                         ->paginate(5)->withPath(url()->full()
             );
 
-            $notes = $note->items();
+        } else {
+            $note->where('owner_id', auth()->id())->orWhere('status', '=', 'public');
 
         }
-        $userId = auth()->id();
 
-        usort(
-            $notes,
+        $notes = $note->orderBy(
+            'created_at',
+            'ASC'
+        )->with('tag')->get();
+
+        $userId = auth()->id();
+        $sortedNotes = $notes->sortBy(
             function ($model) use ($userId) {
                 if ($model->owner_id === $userId) {
                     return -1;
@@ -58,9 +52,8 @@ class NotesController extends Controller
             }
         );
 
-        $notesCollection = collect($notes);
         $perPage = 10;
-        $paginatedItems = new LengthAwarePaginator($notesCollection, count($notesCollection), $perPage);
+        $paginatedItems = new LengthAwarePaginator($sortedNotes, count($sortedNotes), $perPage);
         $paginatedItems->withPath(url()->full());
 
         $collection = Notes::collection($paginatedItems);
@@ -71,7 +64,7 @@ class NotesController extends Controller
 
     public function create(Tag $tag)
     {
-        $tags = Tag::query()->pluck('tag');
+        $tags = $tag->pluck('tag');
 
         return view('notes.create', compact('tags'));
     }
@@ -101,7 +94,7 @@ class NotesController extends Controller
         $note->save();
 
         if ($request->get('tag')) {
-            $tagIDs = Tag::query()->whereIn('tag', $request->get('tag'))->pluck('id');
+            $tagIDs = Tag::whereIn('tag', $request->get('tag'))->pluck('id');
             $note->tag()->attach($tagIDs);
         }
 
@@ -114,7 +107,7 @@ class NotesController extends Controller
             return response()->json('You can only edit your notes');
         };
         $note = Note::find($note->id);
-        $tags = Tag::query()->pluck('tag');
+        $tags = Tag::pluck('tag');
 
         return view('notes.edit', compact('note'), compact('tags'));
     }
@@ -141,7 +134,7 @@ class NotesController extends Controller
         $note->note = $request->get('note');
         $note->description = $request->get('description');
         if ($request->get('tag')) {
-            $tagIDs = Tag::query()->whereIn('tag', $request->get('tag'))->pluck('id');
+            $tagIDs = Tag::whereIn('tag', $request->get('tag'))->pluck('id');
             $note->tag()->attach($tagIDs);
         }
         $note->status = request('status');

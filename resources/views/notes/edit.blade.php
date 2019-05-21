@@ -17,7 +17,7 @@
     <input type="radio" name="status" value="Private"> Private <br>
     <fieldset>
         @foreach($tags as $tag)
-        <input type="checkbox" name="tag[]" value="{{$tag}}" @if (old('tag') == "1") checked @endif>{{$tag}}
+        <input type="checkbox" name="tag[]" value="{{$tag}}">{{$tag}}
         @endforeach
     </fieldset>
     <div>

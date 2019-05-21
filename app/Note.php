@@ -8,7 +8,8 @@ class Note extends Model
 {
     protected $guarded = [];
 
-    public function tag() {
+    public function tag()
+    {
         return $this->belongsToMany('App\Tag');
     }
 }
